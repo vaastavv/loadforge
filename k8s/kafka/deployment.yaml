@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+    app.kubernetes.io/part-of: loadforge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kafka
+        app.kubernetes.io/part-of: loadforge
+    spec:
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.6.1
+          ports:
+            - name: client
+              containerPort: 9092
+            - name: controller
+              containerPort: 9093
+          envFrom:
+            - configMapRef:
+                name: kafka-config
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka/data
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 12
+          livenessProbe:
+            tcpSocket:
+              port: 9092
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+      volumes:
+        # Ephemeral for this scope. Swap for a PVC (+ StatefulSet) to persist logs.
+        - name: data
+          emptyDir: {}

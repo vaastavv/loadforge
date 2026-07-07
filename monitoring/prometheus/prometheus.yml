@@ -1,0 +1,27 @@
+# Prometheus scrape configuration for the LoadForge distributed load testing platform.
+#
+# Both Spring Boot services expose metrics at /actuator/prometheus (Spring Boot Actuator +
+# Micrometer Prometheus registry). Point a Prometheus instance at this file to scrape them.
+#
+# Targets below use the docker-compose service names (see ../../docker-compose.yml), so this
+# works out of the box when Prometheus runs on the same "loadforge-net" Docker network.
+#   - Standalone Prometheus on the host: replace with localhost:8080 / localhost:8081.
+#   - Kubernetes: the ClusterIP Services resolve in-cluster as controller:8080 / worker:8081.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: controller
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['controller:8080']
+        labels:
+          service: test-management-service
+
+  - job_name: worker
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['worker:8081']
+        labels:
+          service: worker-service

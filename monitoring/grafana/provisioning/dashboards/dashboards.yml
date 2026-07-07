@@ -1,0 +1,18 @@
+apiVersion: 1
+
+# Grafana dashboard provisioning for the LoadForge platform.
+# Loads every dashboard JSON found under `options.path` into the "Load Testing" folder.
+# Mount the repo's monitoring/grafana/dashboards directory to /var/lib/grafana/dashboards
+# and this file (with the rest of monitoring/grafana/provisioning) to /etc/grafana/provisioning.
+providers:
+  - name: LoadForge
+    orgId: 1
+    folder: Load Testing
+    folderUid: loadforge
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

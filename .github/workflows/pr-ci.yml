@@ -1,0 +1,57 @@
+# PR CI — build both services and run their full test suites on every pull request.
+# "controller" = test-management-service (port 8080); "worker" = worker-service (port 8081).
+name: PR CI
+
+on:
+  pull_request:
+    branches: [main]
+
+# Least-privilege: a PR build only needs to read the repository contents.
+permissions:
+  contents: read
+
+# Cancel superseded runs for the same PR to save runner minutes.
+concurrency:
+  group: pr-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    strategy:
+      # Report both services even if one fails.
+      fail-fast: false
+      matrix:
+        include:
+          - service: test-management-service
+            label: controller
+          - service: worker-service
+            label: worker
+    defaults:
+      run:
+        working-directory: services/${{ matrix.service }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # `verify` compiles, runs the test suite (surefire), and packages the jar —
+      # covering "build" and "run tests" for each service in one reproducible step.
+      - name: Build and test (${{ matrix.label }})
+        run: mvn -B -ntp verify
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-${{ matrix.service }}
+          path: services/${{ matrix.service }}/target/surefire-reports/
+          if-no-files-found: ignore
+          retention-days: 7

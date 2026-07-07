@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-config
+  labels:
+    app: kafka
+    app.kubernetes.io/part-of: loadforge
+data:
+  # --- KRaft single-node broker+controller (no ZooKeeper) ---
+  KAFKA_NODE_ID: "1"
+  KAFKA_PROCESS_ROLES: "broker,controller"
+  KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+  KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+  # Clients reach the broker through the `kafka` Service on 9092.
+  KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+  KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+  # Fixed cluster id so the log dir formats deterministically on first boot.
+  CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
