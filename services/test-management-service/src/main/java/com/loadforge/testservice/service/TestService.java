@@ -18,5 +18,9 @@ public interface TestService {
 
     TestStatusResponse getTestStatus(UUID testId);
 
+    List<TestResponse> listTests();
+
+    List<ExecutionResponse> listAllExecutions();
+
     List<ExecutionResponse> listExecutions(UUID testId);
 }

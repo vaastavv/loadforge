@@ -127,6 +127,22 @@ public class TestServiceImpl implements TestService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<TestResponse> listTests() {
+        return testRepository.findAll().stream()
+                .map(TestMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExecutionResponse> listAllExecutions() {
+        return executionRepository.findAllByOrderByStartedAtDesc().stream()
+                .map(ExecutionMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ExecutionResponse> listExecutions(UUID testId) {
         getTestOrThrow(testId);
         return executionRepository.findByTest_IdOrderByStartedAtDesc(testId)

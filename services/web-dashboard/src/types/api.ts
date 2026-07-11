@@ -35,6 +35,10 @@ export interface CreateTestRequest {
   durationSeconds: number;
 }
 
+export interface RegisterWorkerRequest {
+  hostname: string;
+}
+
 export interface Execution {
   id: UUID;
   testId: UUID;

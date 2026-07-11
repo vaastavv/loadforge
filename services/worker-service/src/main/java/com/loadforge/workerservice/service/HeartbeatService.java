@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -66,18 +67,35 @@ public class HeartbeatService {
     @Scheduled(fixedDelayString = "${worker.heartbeat.sweep-interval-ms:10000}")
     @Transactional
     public void markStaleWorkersOffline() {
-        Instant cutoff = Instant.now().minusSeconds(timeoutSeconds);
-        List<Worker> stale = workerRepository
-                .findByStatusNotAndLastHeartbeatBefore(WorkerStatus.OFFLINE, cutoff);
+        Instant now = Instant.now();
+        Instant cutoff = now.minusSeconds(timeoutSeconds);
+        List<Worker> workers = workerRepository.findAll();
+        List<Worker> stale = new ArrayList<>();
+        List<Worker> refreshed = new ArrayList<>();
 
-        if (stale.isEmpty()) {
-            return;
+        for (Worker worker : workers) {
+            if (worker.getStatus() == WorkerStatus.OFFLINE) {
+                continue;
+            }
+            if (worker.getLastHeartbeat() == null || worker.getLastHeartbeat().isBefore(cutoff)) {
+                worker.setStatus(WorkerStatus.OFFLINE);
+                stale.add(worker);
+            } else {
+                worker.setLastHeartbeat(now);
+                refreshed.add(worker);
+            }
         }
 
-        stale.forEach(worker -> worker.setStatus(WorkerStatus.OFFLINE));
-        workerRepository.saveAll(stale);
-        log.info("Marked {} worker(s) OFFLINE after {}s heartbeat timeout", stale.size(), timeoutSeconds);
-        stale.forEach(worker -> eventPublisher.publishStatus(worker.getId(), WorkerStatus.OFFLINE));
+        if (!refreshed.isEmpty()) {
+            workerRepository.saveAll(refreshed);
+            refreshed.forEach(worker -> eventPublisher.publishStatus(worker.getId(), worker.getStatus()));
+        }
+
+        if (!stale.isEmpty()) {
+            workerRepository.saveAll(stale);
+            log.info("Marked {} worker(s) OFFLINE after {}s heartbeat timeout", stale.size(), timeoutSeconds);
+            stale.forEach(worker -> eventPublisher.publishStatus(worker.getId(), WorkerStatus.OFFLINE));
+        }
     }
 
     private WorkerResponse toResponse(Worker worker) {

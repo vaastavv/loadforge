@@ -10,6 +10,8 @@ import java.util.UUID;
 
 public interface ExecutionRepository extends JpaRepository<Execution, UUID> {
 
+    List<Execution> findAllByOrderByStartedAtDesc();
+
     List<Execution> findByTest_IdOrderByStartedAtDesc(UUID testId);
 
     Optional<Execution> findFirstByTest_IdOrderByStartedAtDesc(UUID testId);

@@ -135,6 +135,7 @@ services:
       - "${WORKER_PORT:-8081}:8081"
     environment:
       SERVER_PORT: 8081
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     networks:
       - loadforge-net
     restart: unless-stopped

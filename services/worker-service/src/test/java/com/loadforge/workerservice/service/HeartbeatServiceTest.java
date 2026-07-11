@@ -88,6 +88,26 @@ class HeartbeatServiceTest {
     }
 
     @Test
+    void markStaleWorkersOffline_refreshesActiveWorkersAndPublishesStatus() {
+        UUID workerId = UUID.randomUUID();
+        Worker active = Worker.builder()
+                .id(workerId)
+                .hostname("w1")
+                .status(WorkerStatus.ACTIVE)
+                .lastHeartbeat(Instant.now().minusSeconds(5))
+                .build();
+        when(workerRepository.findAll()).thenReturn(List.of(active));
+        when(workerRepository.saveAll(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.markStaleWorkersOffline();
+
+        assertThat(active.getLastHeartbeat()).isNotNull();
+        assertThat(active.getStatus()).isEqualTo(WorkerStatus.ACTIVE);
+        verify(workerRepository).saveAll(List.of(active));
+        verify(eventPublisher).publishStatus(workerId, WorkerStatus.ACTIVE);
+    }
+
+    @Test
     void markStaleWorkersOffline_marksAndPublishesOfflinePerStaleWorker() {
         Worker stale1 = Worker.builder()
                 .id(UUID.randomUUID())

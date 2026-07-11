@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Worker } from '@/types/api';
+import type { RegisterWorkerRequest, Worker } from '@/types/api';
 
 /**
  * Snapshot of the worker registry.
@@ -9,5 +9,10 @@ import type { Worker } from '@/types/api';
  */
 export async function listWorkers(): Promise<Worker[]> {
   const { data } = await apiClient.get<Worker[]>('/api/v1/workers');
+  return data;
+}
+
+export async function registerWorker(payload: RegisterWorkerRequest): Promise<Worker> {
+  const { data } = await apiClient.post<Worker>('/worker-api/register', payload);
   return data;
 }

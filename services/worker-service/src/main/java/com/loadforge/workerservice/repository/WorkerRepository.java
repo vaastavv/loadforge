@@ -12,5 +12,7 @@ public interface WorkerRepository extends JpaRepository<Worker, UUID> {
 
     List<Worker> findByStatusNotAndLastHeartbeatBefore(WorkerStatus status, Instant cutoff);
 
+    List<Worker> findByStatusNot(WorkerStatus status);
+
     long countByStatus(WorkerStatus status);
 }
