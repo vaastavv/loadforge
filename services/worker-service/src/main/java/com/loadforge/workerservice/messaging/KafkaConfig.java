@@ -25,11 +25,11 @@ public class KafkaConfig {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "worker-service");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.loadforge.workerservice.dto");
-        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, TestExecutionJob.class.getName());
-        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
 
+        // Configure the JSON value deserializer via the instance below only. Spring Kafka
+        // rejects a JsonDeserializer that is configured both by property setters AND by
+        // configuration properties, so the JsonDeserializer.* entries must NOT be added to
+        // the props map (that failed the consumer at startup with an IllegalStateException).
         JsonDeserializer<TestExecutionJob> deserializer = new JsonDeserializer<>(TestExecutionJob.class);
         deserializer.addTrustedPackages("com.loadforge.workerservice.dto");
         deserializer.setUseTypeHeaders(false);

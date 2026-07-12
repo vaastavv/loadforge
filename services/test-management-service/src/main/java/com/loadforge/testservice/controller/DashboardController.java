@@ -37,8 +37,8 @@ public class DashboardController {
         List<WorkerResponse> workers = workerRegistry.allWorkers().stream()
                 .map(node -> new WorkerResponse(
                         node.getWorkerId(),
-                        node.getWorkerId().toString(),
-                        node.isHealthy() ? "ACTIVE" : "OFFLINE",
+                        node.getHostname(),
+                        node.isHealthy() ? node.getStatus() : "OFFLINE",
                         Instant.now(),
                         Instant.now()))
                 .toList();

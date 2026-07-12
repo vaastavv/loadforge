@@ -22,8 +22,25 @@ public class WorkerRegistry {
 
     /** Registers a new worker (healthy, zero load) or marks an existing one healthy. */
     public void register(UUID workerId) {
-        workers.compute(workerId, (id, existing) ->
-                existing != null ? markHealthy(existing) : new WorkerNode(id, true, 0));
+        register(workerId, null);
+    }
+
+    /**
+     * Registers a worker with its reported hostname (healthy, zero load), or marks an existing one
+     * healthy while refreshing its hostname whenever a non-blank value is reported.
+     */
+    public void register(UUID workerId, String hostname) {
+        workers.compute(workerId, (id, existing) -> {
+            if (existing != null) {
+                existing.setHealthy(true);
+                if (hostname != null && !hostname.isBlank()) {
+                    existing.setHostname(hostname);
+                }
+                return existing;
+            }
+            String resolved = (hostname != null && !hostname.isBlank()) ? hostname : id.toString();
+            return new WorkerNode(id, resolved, true, 0);
+        });
     }
 
     public void markHealthy(UUID workerId) {
@@ -40,6 +57,17 @@ public class WorkerRegistry {
     public void updateLoad(UUID workerId, int currentLoad) {
         workers.computeIfPresent(workerId, (id, node) -> {
             node.setCurrentLoad(currentLoad);
+            return node;
+        });
+    }
+
+    /** Updates a worker's reported lifecycle status (e.g. BUSY while running a job); no-op if unknown. */
+    public void updateStatus(UUID workerId, String status) {
+        if (status == null || status.isBlank()) {
+            return;
+        }
+        workers.computeIfPresent(workerId, (id, node) -> {
+            node.setStatus(status);
             return node;
         });
     }

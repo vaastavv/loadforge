@@ -40,7 +40,7 @@ class WorkerEventsConsumerTest {
         consumer.onWorkerHeartbeat(new WorkerHeartbeat(workerId, "OFFLINE", Instant.now()));
 
         verify(workerFailoverService).handleWorkerOffline(workerId);
-        verify(workerRegistry, never()).register(any());
+        verify(workerRegistry, never()).register(any(), any());
     }
 
     @Test
@@ -49,7 +49,8 @@ class WorkerEventsConsumerTest {
 
         consumer.onWorkerHeartbeat(new WorkerHeartbeat(workerId, "ACTIVE", Instant.now()));
 
-        verify(workerRegistry).register(workerId);
+        verify(workerRegistry).register(workerId, null);
+        verify(workerRegistry).updateStatus(workerId, "ACTIVE");
         verifyNoInteractions(workerFailoverService);
     }
 
@@ -59,7 +60,8 @@ class WorkerEventsConsumerTest {
 
         consumer.onWorkerHeartbeat(new WorkerHeartbeat(workerId, "BUSY", Instant.now()));
 
-        verify(workerRegistry).register(workerId);
+        verify(workerRegistry).register(workerId, null);
+        verify(workerRegistry).updateStatus(workerId, "BUSY");
         verifyNoInteractions(workerFailoverService);
     }
 }

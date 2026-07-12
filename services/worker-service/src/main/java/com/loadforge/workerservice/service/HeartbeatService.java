@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -45,7 +46,7 @@ public class HeartbeatService {
 
         Worker saved = workerRepository.save(worker);
         log.info("Registered worker {} ({})", saved.getId(), saved.getHostname());
-        eventPublisher.publishStatus(saved.getId(), saved.getStatus());
+        eventPublisher.publishStatus(saved.getId(), saved.getHostname(), saved.getStatus());
         return toResponse(saved);
     }
 
@@ -60,8 +61,23 @@ public class HeartbeatService {
 
         Worker saved = workerRepository.save(worker);
         log.debug("Heartbeat from worker {} -> {}", saved.getId(), saved.getStatus());
-        eventPublisher.publishStatus(saved.getId(), saved.getStatus());
+        eventPublisher.publishStatus(saved.getId(), saved.getHostname(), saved.getStatus());
         return toResponse(saved);
+    }
+
+    /** Transitions a worker's status (e.g. BUSY while running a job) and publishes it immediately. */
+    @Transactional
+    public void updateStatus(UUID workerId, WorkerStatus status) {
+        Worker worker = workerRepository.findById(workerId).orElse(null);
+        if (worker == null) {
+            log.warn("Cannot update status of unknown worker {}", workerId);
+            return;
+        }
+        worker.setStatus(status);
+        worker.setLastHeartbeat(Instant.now());
+        Worker saved = workerRepository.save(worker);
+        eventPublisher.publishStatus(saved.getId(), saved.getHostname(), saved.getStatus());
+        log.debug("Worker {} status -> {}", saved.getId(), status);
     }
 
     @Scheduled(fixedDelayString = "${worker.heartbeat.sweep-interval-ms:10000}")
@@ -88,13 +104,13 @@ public class HeartbeatService {
 
         if (!refreshed.isEmpty()) {
             workerRepository.saveAll(refreshed);
-            refreshed.forEach(worker -> eventPublisher.publishStatus(worker.getId(), worker.getStatus()));
+            refreshed.forEach(worker -> eventPublisher.publishStatus(worker.getId(), worker.getHostname(), worker.getStatus()));
         }
 
         if (!stale.isEmpty()) {
             workerRepository.saveAll(stale);
             log.info("Marked {} worker(s) OFFLINE after {}s heartbeat timeout", stale.size(), timeoutSeconds);
-            stale.forEach(worker -> eventPublisher.publishStatus(worker.getId(), WorkerStatus.OFFLINE));
+            stale.forEach(worker -> eventPublisher.publishStatus(worker.getId(), worker.getHostname(), WorkerStatus.OFFLINE));
         }
     }
 

@@ -31,7 +31,8 @@ public class WorkerEventsConsumer {
         if ("OFFLINE".equalsIgnoreCase(heartbeat.status())) {
             workerFailoverService.handleWorkerOffline(heartbeat.workerId());
         } else {
-            workerRegistry.register(heartbeat.workerId());
+            workerRegistry.register(heartbeat.workerId(), heartbeat.hostname());
+            workerRegistry.updateStatus(heartbeat.workerId(), heartbeat.status());
         }
     }
 

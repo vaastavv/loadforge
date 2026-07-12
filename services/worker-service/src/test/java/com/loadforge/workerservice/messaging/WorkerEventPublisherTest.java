@@ -34,7 +34,7 @@ class WorkerEventPublisherTest {
         WorkerEventPublisher publisher = new WorkerEventPublisher(kafkaTemplate, "worker-heartbeat");
         UUID workerId = UUID.randomUUID();
 
-        publisher.publishStatus(workerId, WorkerStatus.OFFLINE);
+        publisher.publishStatus(workerId, "worker-01", WorkerStatus.OFFLINE);
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
         verify(kafkaTemplate).send(eq("worker-heartbeat"), eq(workerId.toString()), payload.capture());
@@ -42,6 +42,7 @@ class WorkerEventPublisherTest {
         assertThat(payload.getValue()).isInstanceOf(WorkerStatusEvent.class);
         WorkerStatusEvent event = (WorkerStatusEvent) payload.getValue();
         assertThat(event.workerId()).isEqualTo(workerId);
+        assertThat(event.hostname()).isEqualTo("worker-01");
         assertThat(event.status()).isEqualTo("OFFLINE");
         assertThat(event.timestamp()).isNotNull();
     }

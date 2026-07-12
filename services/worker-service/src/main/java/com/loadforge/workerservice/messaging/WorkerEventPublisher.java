@@ -30,8 +30,8 @@ public class WorkerEventPublisher {
     }
 
     /** Publishes the current status of a worker keyed by its id (preserves per-worker ordering). */
-    public void publishStatus(UUID workerId, WorkerStatus status) {
-        WorkerStatusEvent event = new WorkerStatusEvent(workerId, status.name(), Instant.now());
+    public void publishStatus(UUID workerId, String hostname, WorkerStatus status) {
+        WorkerStatusEvent event = new WorkerStatusEvent(workerId, hostname, status.name(), Instant.now());
         kafkaTemplate.send(topic, workerId.toString(), event)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {

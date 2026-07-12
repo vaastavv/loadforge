@@ -56,7 +56,7 @@ class HeartbeatServiceTest {
         WorkerResponse response = service.register(new RegisterWorkerRequest("worker-01"));
 
         assertThat(response.status()).isEqualTo(WorkerStatus.ACTIVE);
-        verify(eventPublisher).publishStatus(workerId, WorkerStatus.ACTIVE);
+        verify(eventPublisher).publishStatus(workerId, "worker-01", WorkerStatus.ACTIVE);
     }
 
     @Test
@@ -74,7 +74,7 @@ class HeartbeatServiceTest {
         WorkerResponse response = service.heartbeat(new HeartbeatRequest(workerId, WorkerStatus.BUSY));
 
         assertThat(response.status()).isEqualTo(WorkerStatus.BUSY);
-        verify(eventPublisher).publishStatus(workerId, WorkerStatus.BUSY);
+        verify(eventPublisher).publishStatus(workerId, "worker-01", WorkerStatus.BUSY);
     }
 
     @Test
@@ -104,7 +104,7 @@ class HeartbeatServiceTest {
         assertThat(active.getLastHeartbeat()).isNotNull();
         assertThat(active.getStatus()).isEqualTo(WorkerStatus.ACTIVE);
         verify(workerRepository).saveAll(List.of(active));
-        verify(eventPublisher).publishStatus(workerId, WorkerStatus.ACTIVE);
+        verify(eventPublisher).publishStatus(workerId, "w1", WorkerStatus.ACTIVE);
     }
 
     @Test
@@ -129,8 +129,8 @@ class HeartbeatServiceTest {
         assertThat(stale1.getStatus()).isEqualTo(WorkerStatus.OFFLINE);
         assertThat(stale2.getStatus()).isEqualTo(WorkerStatus.OFFLINE);
         verify(workerRepository).saveAll(List.of(stale1, stale2));
-        verify(eventPublisher).publishStatus(stale1.getId(), WorkerStatus.OFFLINE);
-        verify(eventPublisher).publishStatus(stale2.getId(), WorkerStatus.OFFLINE);
+        verify(eventPublisher).publishStatus(stale1.getId(), "w1", WorkerStatus.OFFLINE);
+        verify(eventPublisher).publishStatus(stale2.getId(), "w2", WorkerStatus.OFFLINE);
     }
 
     @Test
